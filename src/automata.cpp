@@ -1,13 +1,10 @@
 #include "include/automata.hpp"
 
-#include <cstring>
-#include <fstream>
 #include <iostream>
-#include <iterator>
-#include <ostream>
+#include <iomanip>
 #include <algorithm>
 #include <set>
-#include <stack>
+#include <sstream>
 #include <string>
 
 using std::set;
@@ -94,25 +91,8 @@ Automata::Automata(string regex) {
         symbols.push_back(*i);
         a++;
     }
-
-	std::cout << "Símbolos: " << this->getSymbols() << std::endl;
-    std::cout << std::endl;
     this->buildAutomata();
     this->shortNames();
-    for (auto s = this->states.begin(); s != this->states.end(); s++){
-        std::cout << "Estado: " << s->getName() << std::endl;
-        std::cout << "\tTransiciones:\n";
-        map<char,string> transitions = s->getTransitions();
-        for(auto t = transitions.begin(); t != transitions.end(); t++){
-            std::cout << "\t\tpor " << t->first << " a " << t->second << std::endl;
-        }
-    }
-
-    std::cout << "Estados finales:\n";
-    for (auto rs = this->rightStates.begin(); rs != this->rightStates.end(); rs++)
-        std::cout << "\t-> " << *rs << std::endl;
-
-    std::cout << "Estado Actual: " << this->actualState.getName() << std::endl;
 }
 
 string Automata::getRegex(){
@@ -139,12 +119,6 @@ list<string> Automata::getTransitions(){
 
 string Automata::getActualState(){
     return this->actualState.getName();
-}
-
-string Automata::getTable(){
-    string table = "";
-
-    return table;
 }
 
 bool Automata::validate(string line){
@@ -251,7 +225,7 @@ string derive(string regex, char symbol) {
 
     int pS = 0;     // PairStack -> en qué nivel de paréntesis está
     int orPos = -1; // Aquí se guarda la posición del primer Or encontrado en caso de que haya
-    int splitPos = 0; // Esta será la posición desde la que se partirá el Re en caso de no haber Or Principal
+    int splitPos = 0; // Esta será la posición desde la que se separará el Re en caso de no haber Or Principal
     int mainPairs = 0; // Cuantos paréntesis hay en el nivel principal
     int reSize = regex.size(); // Tamaño del Regex
     string result = "~"; // La derivada de la RE
@@ -265,9 +239,6 @@ string derive(string regex, char symbol) {
     else if ((regex == "#") && (symbol != '~')) return "#";
     if (symbol == '~') return regex;
 
-    /* std::cout << "|---- Lang: " << lang << " ----|" << std::endl; */
-    /* std::cout << "|---- Symbol: " << symbol << " ----|" << std::endl; */
-    /* std::cout << "|---- Size Lang: " << sizeRegex << " ----|" << std::endl; */
     if (reSize == 2) {
         if (regex[0] == symbol && (regex[1] == '*' || regex[1] == '+')) {
             /*
@@ -439,7 +410,7 @@ string derive(string regex, char symbol) {
 bool hasLambda(string regex) {
     int pS = 0;     // PairStack -> En que nivel de parentesis está el análisis
     int orPos = -1; // Aquí se guarda la posición del primer Or encontrado en caso de que haya
-    int splitPos = 0; // Esta será la posición desde la que se partirá el Re en caso de no haber Or Principal
+    int splitPos = 0; // Esta será la posición desde la que se separará el Re en caso de no haber Or Principal
     int mainPairs = 0; // Cuando Parentesis hay en el nivel principal
     int reSize = regex.size(); // Tamaño del Regex
     bool hasL = false;
@@ -518,3 +489,57 @@ bool stateExist(list<State> states, string name){
     }
     return exits;
 }
+
+string Automata::getTable(){
+    using std::left;
+    using std::setw;
+    using std::endl;
+    using std::stringstream;
+
+    stringstream table;
+
+    table << "Autómata para " << this->regex;
+    table << endl << endl; 
+
+    table << left << setw(6) << "Sts.";
+    for (int i = 0; i < this->symbols.size(); i++){
+        table << left << setw(5) << this->symbols[i];
+    }
+    table << endl; 
+    for (auto s = this->states.begin(); s != this->states.end(); s++){
+        table << left << setw(6) << s->getName();
+        map<char,string> transitions = s->getTransitions();
+        for(auto t = transitions.begin(); t != transitions.end(); t++)
+            table << left << setw(5) << t->second;
+        auto rsTemp = std::find(
+            this->rightStates.begin(),
+            this->rightStates.end(),
+            s->getName()
+        );
+        if (rsTemp != std::end(this->rightStates)) table << left << setw(1) << 1;
+        else table << left << setw(1) << 0;
+        table << endl; 
+    }
+    return table.str();
+}
+
+/*
+    Cosas para imprimir el automata 
+
+	std::cout << "Símbolos: " << this->getSymbols() << std::endl;
+    std::cout << std::endl;
+    for (auto s = this->states.begin(); s != this->states.end(); s++){
+        std::cout << "Estado: " << s->getName() << std::endl;
+        std::cout << "\tTransiciones:\n";
+        map<char,string> transitions = s->getTransitions();
+        for(auto t = transitions.begin(); t != transitions.end(); t++){
+            std::cout << "\t\tpor " << t->first << " a " << t->second << std::endl;
+        }
+    }
+
+    std::cout << "Estados finales:\n";
+    for (auto rs = this->rightStates.begin(); rs != this->rightStates.end(); rs++)
+        std::cout << "\t-> " << *rs << std::endl;
+
+    std::cout << "Estado Actual: " << this->actualState.getName() << std::endl;
+*/

@@ -8,12 +8,12 @@ using std::string;
 
 int main(int argc, char** argv){
 	/* char reg[] = "(0|10*1)*10*"; */
-	/* char reg[] = "(aa|b*a|(abc|bc|~)bac|~)+ab*"; */
+	char reg[] = "(aa|b*a|(abc|bc|~)bac|~)+ab*";
 	/* char reg[] = "(a|bcbac)(aa|b*a|(abc|bc|~)bac|~)*ab*|b*"; */
 	/* char reg[] = "(aa|b*a|(abc|bc|a*)bac|~)+ab*"; */
 	/* char reg[] = "0*1(0|10*1)*10*|0*"; */
 	/* char reg[] = "0*1(0|10*1)*10*"; */
-	char reg[] = "1*10*1";
+	/* char reg[] = "1*10*1"; */
 	Automata af = Automata(reg);	
 
     std::cout << std::endl;
@@ -24,10 +24,12 @@ int main(int argc, char** argv){
     std::cout << std::endl;
 
 
-    /* bool isvalid = af.validate("aaaaaaaaaaaabbbbbbbabacabcbacab"); */
-    bool isvalid = af.validate("11111111101");
+    bool isvalid = af.validate("aaaaaaaaaaaabbbbbbbabacabcbacab");
+    /* bool isvalid = af.validate("11111111101"); */
     if(isvalid) std::cout << "Es Valido" << std::endl;
     else std::cout << "nada de nada" << std::endl;
+
+    std::cout << af.getTable();
 
     /* string derived = reg; */
     /* char symbol = 'a'; */

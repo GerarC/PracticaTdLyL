@@ -306,32 +306,32 @@ string derive(string regex, char symbol) {
     switch (regex[0]) { // Verifica si el primer caracter es un paréntesis u otra cosa
     case '(':
         if (mainPairs == 1 && regex[reSize - 1] == '*' && regex[reSize - 2] == ')') {
-        // Solo Hay una expresión del tipo (u)*
-        bool mo = false; // main Or
-        u = regex.substr(1, reSize - 3);
-        v = regex;
-        dU = derive(u, symbol);
-        for (int i = 0; i < dU.size(); i++) {
-            // Aquí se verífica si la derivada tiene un Or principal
-            switch (dU[i]) {
-                case '(':
-                    pS++;
-                    break;
-                case ')':
-                    pS--;
-                    break;
-                case '|':
-                    if (pS == 0) mo = true;
-                    break;
+            // Solo Hay una expresión del tipo (u)*
+            bool mo = false; // main Or
+            u = regex.substr(1, reSize - 3);
+            v = regex;
+            dU = derive(u, symbol);
+            for (int i = 0; i < dU.size(); i++) {
+                // Aquí se verífica si la derivada tiene un Or principal
+                switch (dU[i]) {
+                    case '(':
+                        pS++;
+                        break;
+                    case ')':
+                        pS--;
+                        break;
+                    case '|':
+                        if (pS == 0) mo = true;
+                        break;
+                }
             }
-        }
-        if (mo) { // Si la ER tiene un Or principal la pone entre paréntesis
-            dU = '(' + dU + ')';
-        }
-        result = dU;
-        if (result != "~") result += v;
-        else result = v;
-        if (dU == "#") result = "#";
+            if (mo) { // Si la ER tiene un Or principal la pone entre paréntesis
+                dU = '(' + dU + ')';
+            }
+            result = dU;
+            if (result != "~") result += v;
+            else result = v;
+            if (dU == "#") result = "#";
         }
         else if (mainPairs == 1 && regex[reSize - 1] == '+' && regex[reSize - 2] == ')') {
             // Solo Hay una expresión del tipo (u)+

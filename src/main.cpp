@@ -8,7 +8,8 @@ using std::string;
 
 int main(int argc, char** argv){
 	/* char reg[] = "(0|10*1)*10*"; */
-	char reg[] = "(aa|b*a|(abc|bc|~)bac|~)+ab*";
+	/* char reg[] = "(aa|b*a|(abc|bc|~)bac|~)+ab*"; */
+	char reg[] = "(aab|ab*)+acb*";
 	/* char reg[] = "(a|bcbac)(aa|b*a|(abc|bc|~)bac|~)*ab*|b*"; */
 	/* char reg[] = "(aa|b*a|(abc|bc|a*)bac|~)+ab*"; */
 	/* char reg[] = "0*1(0|10*1)*10*|0*"; */

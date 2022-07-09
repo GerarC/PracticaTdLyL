@@ -57,5 +57,4 @@ void build_re_cb(Fl_Widget * w, void* data){
 
     printf("%s", table.c_str());
     temp->buff->text(table.c_str());
-
 }

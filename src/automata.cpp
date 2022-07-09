@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <iomanip>
 #include <ostream>
 #include <algorithm>
 #include <set>
@@ -142,9 +143,36 @@ string Automata::getActualState(){
 }
 
 string Automata::getTable(){
-    string table = "";
+    using std::left;
+    using std::setw;
+    using std::endl;
+    using std::stringstream;
 
-    return table;
+    stringstream table;
+
+    table << "Autómata para " << this->regex;
+    table << endl << endl; 
+
+    table << left << setw(6) << "Sts.";
+    for (int i = 0; i < this->symbols.size(); i++){
+        table << left << setw(5) << this->symbols[i];
+    }
+    table << endl; 
+    for (auto s = this->states.begin(); s != this->states.end(); s++){
+        table << left << setw(6) << s->getName();
+        map<char,string> transitions = s->getTransitions();
+        for(auto t = transitions.begin(); t != transitions.end(); t++)
+            table << left << setw(5) << t->second;
+        auto rsTemp = std::find(
+            this->rightStates.begin(),
+            this->rightStates.end(),
+            s->getName()
+        );
+        if (rsTemp != std::end(this->rightStates)) table << left << setw(1) << 1;
+        else table << left << setw(1) << 0;
+        table << endl; 
+    }
+    return table.str();
 }
 
 bool Automata::validate(string line){

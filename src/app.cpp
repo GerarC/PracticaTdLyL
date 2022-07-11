@@ -4,6 +4,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Window.H>
+#include <FL/fl_ask.H>
 #include <cstdio>
 #include <string>
 
@@ -21,19 +22,14 @@ App::App() {
     disp = new Fl_Text_Display(20, 120, 440-40, 540-120-20, "Tabla");
 
     disp->buffer(buff);
-    build_btn->callback(build_re_cb , (void*)this);
+    build_btn->callback(build_re_cb, (void*) this);
+    validate_btn->callback(validate_cb, (void*) this);
 
     menubar->add("Archivo/Cerrar", FL_CTRL + 'q', menu_callback, (void*)this);
     menubar->add("Ayuda/Ayuda", 0, menu_callback, (void*)this);
     menubar->add("Ayuda/Acerca de", 0, menu_callback, (void*)this);
     win->end();
     win->show();
-}
-
-// Static menu callback
-void menu_callback(Fl_Widget*w, void*data) {
-    App *o = (App*)data;
-    o->menu_actions();
 }
 
 // Callback method with class access
@@ -43,12 +39,19 @@ void App::menu_actions() {
 
     if ( strcmp(picked, "Archivo/Cerrar") == 0 ) exit(0);
     if ( strcmp(picked, "Ayuda/Ayuda") == 0 ) printf("Help goes here\n");
+    if ( strcmp(picked, "Ayuda/Acerca de") == 0 ){
+        string text = "Esta aplicación fue hecha para la práctica I\n";
+        text += "de la materia Teoría de Lenguajes y Laboratorio.\n";
+        text += "\nHecho por Gerardo E. Castillo.";
+
+        fl_message("%s", text.c_str());
+    }
 }
 
 void build_re_cb(Fl_Widget * w, void* data){
     string regex;
     string table;
-    App * temp = (App * ) data;
+    App * temp = (App *) data;
 
     regex = temp->regex_in->value();
     
@@ -58,3 +61,24 @@ void build_re_cb(Fl_Widget * w, void* data){
     printf("%s", table.c_str());
     temp->buff->text(table.c_str());
 }
+
+void validate_cb(Fl_Widget * w, void* data){
+    string line;
+    bool isValid = false;
+
+    App * temp = (App *) data;
+
+    line = temp->line_in->value();
+
+    isValid = temp->afd.validate(line);
+
+    if (isValid) fl_message("La linea de caracteres es valida\n");
+    else fl_message("La linea de caracteres no es valida\n");
+}
+
+// Static menu callback
+void menu_callback(Fl_Widget*w, void*data) {
+    App *o = (App*)data;
+    o->menu_actions();
+}
+

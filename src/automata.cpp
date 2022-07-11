@@ -153,13 +153,13 @@ string Automata::getTable(){
     table << "Autómata para " << this->regex;
     table << endl << endl; 
 
-    table << left << setw(6) << "Sts.";
+    table << left << setw(10) << "Sts.";
     for (int i = 0; i < this->symbols.size(); i++){
-        table << left << setw(5) << this->symbols[i];
+        table << left << setw(6) << this->symbols[i];
     }
     table << endl; 
     for (auto s = this->states.begin(); s != this->states.end(); s++){
-        table << left << setw(6) << s->getName();
+        table << left << setw(8) << s->getName();
         map<char,string> transitions = s->getTransitions();
         for(auto t = transitions.begin(); t != transitions.end(); t++)
             table << left << setw(5) << t->second;
@@ -176,6 +176,7 @@ string Automata::getTable(){
 }
 
 bool Automata::validate(string line){
+    actualState = *this->states.begin();
     bool isValid = false;
     int lineSize = line.size();
 
@@ -293,25 +294,22 @@ string derive(string regex, char symbol) {
     else if ((regex == "#") && (symbol != '~')) return "#";
     if (symbol == '~') return regex;
 
-    /* std::cout << "|---- Lang: " << lang << " ----|" << std::endl; */
-    /* std::cout << "|---- Symbol: " << symbol << " ----|" << std::endl; */
-    /* std::cout << "|---- Size Lang: " << sizeRegex << " ----|" << std::endl; */
-    if (reSize == 2) {
-        if (regex[0] == symbol && (regex[1] == '*' || regex[1] == '+')) {
+    std::cout << "|---- Lang: " << regex << " ----|" << std::endl;
+    std::cout << "|---- Symbol: " << symbol << " ----|" << std::endl;
+    std::cout << "|---- Size Lang: " << reSize << " ----|" << std::endl;
+
+    if (reSize == 2 && (regex[1] == '*' || regex[1] == '+')) {
+        // Si la ER tiene solo dos simbolos
+        if (regex[0] == symbol){
             /*
-               Si la ER tiene solo dos simbolos, El primero de estos dos coincide
+               El primero de estos dos coincide
                con el símbolo con el cual se está derivando y el segundo con '*' o '+'
                retorna <símbolo>*
             */
-        result = symbol;
-        result.push_back('*');
+            result = symbol;
+            result.push_back('*');
         }
-        else if (regex[0] != symbol) {
-            // Si el tamaño de la ER es 2 y el primero no coincide con el simbolo entonces retorna error
-            result = "#";
-        }
-        else result = regex[1];
-        /* std::cout << lang <<" Result: " << result << std::endl; */
+        else result = "#";
         return result;
     }
     else if (reSize == 1){
@@ -360,6 +358,11 @@ string derive(string regex, char symbol) {
         else if (dU == "#") result = "#";
         return result;
     }
+    else if ((regex[1] != '*')&&(regex[1] != '+')&&(regex[0] != '(')){
+        if (regex[0] == symbol) return regex.substr(1);
+        else return "#";
+    }
+
     switch (regex[0]) { // Verifica si el primer caracter es un paréntesis u otra cosa
     case '(':
         if (mainPairs == 1 && regex[reSize - 1] == '*' && regex[reSize - 2] == ')') {
@@ -441,23 +444,17 @@ string derive(string regex, char symbol) {
     }
         break;
     default:
-        if (splitPos == 1) { // Si la ER no comienza con '(u)' o 'u*' y similares, entonces la deriva
-            if (regex[0] == symbol) result = regex.substr(splitPos);
-            else return "#";
-        }
-        else { // Si comienza con 'u*' o 'u+' entonces lo separa en u y v, entonces los deriva
-            u = regex.substr(0, splitPos);
-            v = regex.substr(splitPos);
-            if (regex[splitPos - 1] == '*') {
-                dU = derive(u, symbol);
-                if (dU != "#") result = dU + v;
-                dV = derive(v, symbol);
-                if ((dV != "~") && (dV != "#")) {
-                    if (result != "~") result = result + "|" + dV;
-                    else result = dV;
-                }
-                if((dU == "#")&&( dV == "#")) return "#";
+        u = regex.substr(0, splitPos);
+        v = regex.substr(splitPos);
+        if (regex[splitPos - 1] == '*') {
+            dU = derive(u, symbol);
+            if (dU != "#") result = dU + v;
+            dV = derive(v, symbol);
+            if ((dV != "~") && (dV != "#")) {
+                if (result != "~") result = result + "|" + dV;
+                else result = dV;
             }
+            if((dU == "#")&&( dV == "#")) return "#";
         }
         break;
     }

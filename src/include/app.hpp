@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
+#include <FL/fl_ask.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Text_Display.H>
@@ -36,5 +37,6 @@ class App {
 
 void menu_callback(Fl_Widget*w, void*data);
 void build_re_cb(Fl_Widget * w, void* data);
+void validate_cb(Fl_Widget * w, void* data);
 
 #endif

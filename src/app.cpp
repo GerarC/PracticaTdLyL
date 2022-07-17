@@ -19,7 +19,7 @@ App::App() {
     line_in = new Fl_Input(70, 70, 250, 25, "Prueba: ");
     validate_btn = new Fl_Button(325, 70, 95, 25, "Validar");
     buff = new Fl_Text_Buffer();
-    disp = new Fl_Text_Display(20, 120, 440-40, 540-120-20, "Tabla");
+    disp = new Fl_Text_Display(20, 120, 440-40, 540-120-20, "Información del Autómata");
 
     disp->buffer(buff);
     build_btn->callback(build_re_cb, (void*) this);
@@ -50,16 +50,19 @@ void App::menu_actions() {
 
 void build_re_cb(Fl_Widget * w, void* data){
     string regex;
-    string table;
+    string info;
     App * temp = (App *) data;
 
     regex = temp->regex_in->value();
     
     temp->afd = Automata(regex);
-    table = temp->afd.getTable();
+    info = "La expresión regular es esta: \n-> " + regex + "\n";
+    info += "los simbolos son : " + temp->afd.getSymbols() + "\n\n";
 
-    printf("%s", table.c_str());
-    temp->buff->text(table.c_str());
+    info += temp->afd.getTable();
+
+    printf("%s", info.c_str());
+    temp->buff->text(info.c_str());
 }
 
 void validate_cb(Fl_Widget * w, void* data){

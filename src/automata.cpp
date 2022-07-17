@@ -134,7 +134,7 @@ string Automata::getTable(){
 
     stringstream table;
 
-    table << "Autómata para " << this->regex;
+    table << "Tabla del autómata para el RE: ";
     table << endl << endl; 
 
     table << left << setw(10) << "Sts.";
@@ -192,6 +192,7 @@ void Automata::buildAutomata(){
     char tempC;
 
     this->states.push_back(State(regex));
+    if(hasLambda(this->regex)   ) this->rightStates.push_back(regex);
 
     this->actualState = *this->states.begin();
     for (auto s = this->states.begin(); s != this->states.end(); s++){
@@ -395,7 +396,6 @@ string derive(string regex, char symbol) {
         }
         break;
     default: // Comienza con algo como a*<algo> o a+<algo>
-        std::cout << "Entra" << std::endl;
         u = regex.substr(0, splitPos);
         dU = derive(u, symbol);
         v = regex.substr(splitPos);
@@ -429,7 +429,11 @@ bool hasLambda(string regex) {
     string v; // Parte derecha de la RE
 
     if (regex == "~") return true;
-    if ((reSize == 2)&&(regex[1] == '*')) return true ;
+    else if (reSize == 1) return false;
+    else if (reSize == 2){
+        if(regex[1] == '*') return true;
+        if(regex[1] == '+') return false;
+    }
 
     for (int i = 0; i < reSize; i++) { // Básicamente hace lo mismo que el switch de derive
         switch (regex[i]) {
@@ -487,7 +491,10 @@ bool hasLambda(string regex) {
             }
             break;
         default:
-            hasL = false;
+            u = regex.substr(0, splitPos);
+            v = regex.substr(splitPos);
+            std::cout << u << " " << v << std::endl; 
+            hasL = hasLambda(u)&&hasLambda(v);
             break;
     }
     return hasL;

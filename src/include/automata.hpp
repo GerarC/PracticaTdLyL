@@ -29,6 +29,7 @@ class Automata{
         list<string> getTransitions();
 		string getActualState();
         string getTable();
+        string getInfo();
         bool validate(string line);
 		void nextState(char sym);
 		void buildAutomata();

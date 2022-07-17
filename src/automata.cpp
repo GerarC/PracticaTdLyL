@@ -159,6 +159,57 @@ string Automata::getTable(){
     return table.str();
 }
 
+string Automata::getInfo(){
+    string info;
+    info = "La ER en la que está basado el AFD es:\n-> ";
+    info += this->regex + "\n\n";
+
+    /* Symbols */
+    {
+        info += "Los símbolos son: ";
+        int size = this->symbols.size();
+        string syms = "{";
+        syms.push_back(this->symbols[0]);
+        for (int i = 1; i < size; i++){
+            syms += ", ";
+            syms.push_back(this->symbols[i]);
+        }
+        syms += "}\n";
+        info += syms;
+    }
+
+    /* States */
+    {
+        info += "Los estados son: ";
+        string sts = "{";
+        auto state = this-> states.begin();
+        sts += state->getName();
+        state++;
+        while (state != this->states.end()){
+            sts += ", " + state->getName();
+            state++;
+        }
+        sts += "}\n";
+        info += sts;
+    }
+
+    /* Right states */
+    {
+        info += "Los estados de aceptación son: ";
+        string rightS = "{";
+        auto state = this->rightStates.begin();
+        rightS += *state;
+        state++;
+        while (state != this->rightStates.end()){
+            rightS += ", " + *state;
+            state++;
+        }
+        rightS += "}\n";
+        info += rightS;
+    }
+    return info;
+}
+
 bool Automata::validate(string line){
     actualState = *this->states.begin();
     bool isValid = false;
@@ -257,6 +308,9 @@ string derive(string regex, char symbol) {
     string v; // Parte derecha de la RE
     string dU; // Derivada de la parte izquierda
     string dV; // Derivada de la parte dere
+
+
+    std::cout << "->La ER es: " << regex << std::endl;
     
     if(reSize == 0) return "~";
     else if ((regex == "#")||((regex == "~")&&(symbol != '~'))) return "#";
@@ -301,8 +355,8 @@ string derive(string regex, char symbol) {
             }
             break;
         default:
-            if (pS == 0) { // Si no está dentro de un paréntesis
-                if (splitPos == 0) splitPos = i + 1; // El punto de separación se pone en el primer caracter
+            if (pS == 0 && splitPos == 0) { // Si no está dentro de un paréntesis
+                splitPos = i + 1; // El punto de separación se pone en el primer caracter
                 if (i > 1 && regex[i - 1] == ')' && mainPairs == 1) splitPos = i;
             }
         }
@@ -325,6 +379,7 @@ string derive(string regex, char symbol) {
         }
         else if (dV != "#") result = dV;
         else result = "#";
+        std::cout << "or " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
 
         return result;
     }
@@ -336,7 +391,8 @@ string derive(string regex, char symbol) {
 
     switch (regex[0]) { // Verifica si el primer caracter es un paréntesis u otra cosa
     case '(':
-        if (mainPairs == 1 && regex[reSize - 2] == ')') {
+            std::cout << "(u)<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
+        if (mainPairs == 1 && regex[reSize - 2] == ')' && (regex[reSize - 1] == '*' || regex[reSize - 1] == '+')) {
             // Solo Hay una expresión del tipo (u)* o de la forma (u)+
             bool mo = false; // main Or
             u = regex.substr(1, reSize - 3);
@@ -371,8 +427,26 @@ string derive(string regex, char symbol) {
         }
         else if (mainPairs == 1 && regex[reSize - 1] == ')') {
             // Solo una expresión del tipo (u)
+            bool mo = false; // main Or
             u = regex.substr(1, reSize - 2);
             dU = derive(u, symbol);
+            for (int i = 0; i < dU.size(); i++) {
+                // Aquí se verífica si la derivada tiene un Or principal
+                switch (dU[i]) {
+                    case '(':
+                        pS++;
+                        break;
+                    case ')':
+                        pS--;
+                        break;
+                    case '|':
+                        if (pS == 0) mo = true;
+                        break;
+                }
+            }
+            if (mo) { // Si la ER tiene un Or principal la pone entre paréntesis
+                dU = '(' + dU + ')';
+            }
             if (dU != "~") result = dU;
         }
         else {
@@ -385,10 +459,12 @@ string derive(string regex, char symbol) {
             if ((dU != "~") && (dU != "#")) result = dU;
             if (result != "~") result += v;
             else result = v;
+            std::cout << "(u)<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
             if (dU == "#") result = "#";
             if (hl) { // Si u contiene a lambda, entonces deriva a v
                 dV = derive(v, symbol);
-                if ((dV != "~") && (dV != "#")) {
+            std::cout << "(u)<algo> lambda " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
+                if (dV != "#") {
                     if ((result != "#")&&(!containRE(dU, dV))) result = result + "|" + dV;
                     else result = dV;
                 }
@@ -405,12 +481,15 @@ string derive(string regex, char symbol) {
         else result = v;
         if (dU == "#") result = "#";
 
+        
+            std::cout << "a+<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
         if (regex[splitPos - 1] == '*'){
             dV = derive(v, symbol);
             if(result != "#"){
                 if((!containRE(dU, dV))&&(dV != "#")) result = result + "|" + dV;
             }
             else if(dV != "#") result = dV;
+            std::cout << "a*<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
         }
         break;
     }
@@ -458,8 +537,8 @@ bool hasLambda(string regex) {
             }
             break;
         default:
-            if (pS == 0) {
-                if (splitPos == 0) splitPos = i + 1;
+            if ((pS == 0)&&(splitPos == 0)) {
+                splitPos = i + 1;
                 if (i > 1 && regex[i - 1] == ')' && mainPairs == 1) splitPos = i;
             }
             break;
@@ -493,7 +572,6 @@ bool hasLambda(string regex) {
         default:
             u = regex.substr(0, splitPos);
             v = regex.substr(splitPos);
-            std::cout << u << " " << v << std::endl; 
             hasL = hasLambda(u)&&hasLambda(v);
             break;
     }

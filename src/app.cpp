@@ -56,8 +56,7 @@ void build_re_cb(Fl_Widget * w, void* data){
     regex = temp->regex_in->value();
     
     temp->afd = Automata(regex);
-    info = "La expresión regular es esta: \n-> " + regex + "\n";
-    info += "los simbolos son : " + temp->afd.getSymbols() + "\n\n";
+    info = temp->afd.getInfo();
 
     info += temp->afd.getTable();
 

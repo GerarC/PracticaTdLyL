@@ -38,5 +38,6 @@ class Automata{
 string derive(string lang, char symbol);
 bool hasLambda(string regex);
 bool stateExist(list<State> states, string name);
+bool containRE(string mainRE, string secondRE);
 
 #endif

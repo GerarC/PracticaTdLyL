@@ -1,12 +1,6 @@
 #include "include/app.hpp"
 
 int main() {
-    App app;
+    App app; // Llamada a la aplicación
     return(Fl::run());
 }
-
-/*
-
-    FIXME El método de derivar tiene varios errores, como el que repita el mismo valor varias veces
-
-*/

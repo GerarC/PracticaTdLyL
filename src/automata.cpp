@@ -96,24 +96,8 @@ Automata::Automata(string regex) {
         a++;
     }
 
-	std::cout << "Símbolos: " << this->getSymbols() << std::endl;
-    std::cout << std::endl;
     this->buildAutomata();
     this->shortNames();
-    for (auto s = this->states.begin(); s != this->states.end(); s++){
-        std::cout << "Estado: " << s->getName() << std::endl;
-        std::cout << "\tTransiciones:\n";
-        map<char,string> transitions = s->getTransitions();
-        for(auto t = transitions.begin(); t != transitions.end(); t++){
-            std::cout << "\t\tpor " << t->first << " a " << t->second << std::endl;
-        }
-    }
-
-    std::cout << "Estados finales:\n";
-    for (auto rs = this->rightStates.begin(); rs != this->rightStates.end(); rs++)
-        std::cout << "\t-> " << *rs << std::endl;
-
-    std::cout << "Estado Actual: " << this->actualState.getName() << std::endl;
 }
 
 string Automata::getRegex(){
@@ -180,11 +164,10 @@ bool Automata::validate(string line){
     bool isValid = false;
     int lineSize = line.size();
 
-        std::cout << "Actual State: " << this->actualState.getName() << std::endl;
     for (int i = 0; i < lineSize; i++){
-        std::cout << "Actual Symbol: " << line[i] << std::endl;
+        auto sym = std::find(this->symbols.begin(), this->symbols.end(), line[i]);
+        if (sym == std::end(this->symbols)) return false;
         this->nextState(line[i]);
-        std::cout << "Actual State: " << this->actualState.getName() << std::endl;
     }
     auto rsTemp = std::find(this->rightStates.begin(), this->rightStates.end(), this->actualState.getName());
     if (rsTemp != std::end(this->rightStates)) isValid = true;
@@ -230,21 +213,6 @@ void Automata::buildAutomata(){
             }
         }
     }
-
-    for (auto s = this->states.begin(); s != this->states.end(); s++){
-        std::cout << "Estado: " << s->getName() << std::endl;
-        std::cout << "\tTransiciones:\n";
-        map<char,string> transitions = s->getTransitions();
-        for(auto t = transitions.begin(); t != transitions.end(); t++){
-            std::cout << "\t\tpor " << t->first << " a " << t->second << std::endl;
-        }
-    }
-
-    std::cout << "Estados finales:\n";
-    for (auto rs = this->rightStates.begin(); rs != this->rightStates.end(); rs++)
-        std::cout << "\t-> " << *rs << std::endl;
-
-    std::cout << "Estado Actual: " << this->actualState.getName() << std::endl;
 }
 
 void Automata::shortNames(){ // Solo sirve para poner nombres cortos a los estados
@@ -269,7 +237,7 @@ void Automata::shortNames(){ // Solo sirve para poner nombres cortos a los estad
 
 string derive(string regex, char symbol) {
     /*
-        
+
        Como se dijo al principio, separaremos el ER al primer punto,
        la parte izquierda será llamada U y la Parte derecha V.
        Pero para esto necesitamos verificar si la expresión solo tiene concatenaciones
@@ -282,39 +250,32 @@ string derive(string regex, char symbol) {
     int orPos = -1; // Aquí se guarda la posición del primer Or encontrado en caso de que haya
     int splitPos = 0; // Esta será la posición desde la que se partirá el Re en caso de no haber Or Principal
     int mainPairs = 0; // Cuantos paréntesis hay en el nivel principal
-    int reSize = regex.size(); // Tamaño del Regex
+    int reSize = (int)regex.size(); // Tamaño del Regex
     string result = "~"; // La derivada de la RE
     string u; // Parte izquierda de la RE
     string v; // Parte derecha de la RE
     string dU; // Derivada de la parte izquierda
-    string dV; // Derivada de la parte derecha
-
-    if (reSize == 0) return "~";
-    else if (regex == "#") return "#";
-    else if ((regex == "#") && (symbol != '~')) return "#";
-    if (symbol == '~') return regex;
-
-    std::cout << "|---- Lang: " << regex << " ----|" << std::endl;
-    std::cout << "|---- Symbol: " << symbol << " ----|" << std::endl;
-    std::cout << "|---- Size Lang: " << reSize << " ----|" << std::endl;
-
-    if (reSize == 2 && (regex[1] == '*' || regex[1] == '+')) {
-        // Si la ER tiene solo dos simbolos
-        if (regex[0] == symbol){
-            /*
-               El primero de estos dos coincide
-               con el símbolo con el cual se está derivando y el segundo con '*' o '+'
-               retorna <símbolo>*
-            */
-            result = symbol;
-            result.push_back('*');
-        }
-        else result = "#";
-        return result;
-    }
+    string dV; // Derivada de la parte dere
+    
+    if(reSize == 0) return "~";
+    else if ((regex == "#")||((regex == "~")&&(symbol != '~'))) return "#";
+    else if (symbol == '~') return regex; 
     else if (reSize == 1){
-        if (regex[0] == symbol) return "~";
+        if (symbol == regex[0]) return "~";
         else return "#";
+    }
+    else if (reSize == 2){ // Solo hay 2 caracteres
+        if (regex[0] != symbol) return "#"; // Retorna error de una vez si el primer carater no es el indicado
+        switch (regex[1]){
+            case '+':
+            case '*': // Si el segundo caracter es * o +
+                regex[1] = '*';
+                return regex;
+                break;
+            default:
+                return regex.substr(1);
+                break;
+        }
     }
 
     for (int i = 0; i < reSize; i++) {
@@ -323,7 +284,7 @@ string derive(string regex, char symbol) {
             if (i > 1 && regex[i - 1] == ')' && mainPairs == 1 && pS == 0) splitPos = i;
             pS++;
             break;
-        case ')': // sP-- 
+        case ')': // sP--
             pS--;
             if (pS == 0) mainPairs++; // Cuando stackPairs es 0 otra vez, entonces aumenta el número de parentesis principales
             break;
@@ -345,61 +306,48 @@ string derive(string regex, char symbol) {
             }
         }
     }
-    if (orPos != -1) { // Si hay un Or principal entonces divide el RE en U y V
+
+    if (orPos != -1) { // 
+        /*
+
+           Si llega a haber un Or, entonces parte el ER en dos
+           Deriva los dos, verifica si uno existe en el otro y no los une en caso de ser verdad
+
+        */
         u = regex.substr(0, orPos);
         v = regex.substr(orPos + 1);
         dU = derive(u, symbol);
         dV = derive(v, symbol);
-        if ((dU != "~") && (dU != "#")) {
+        if ((dU != "#")) {
             result = dU;
-            if (((dV != "~") && (dV != "#")) && result != "~") result = result + "|" + dV;
+            if ((dV != "#") && (result != "~") && !containRE(dV, dU)) result = result + "|" + dV;
         }
         else if (dV != "#") result = dV;
-        else if (dU == "#") result = "#";
+        else result = "#";
+
         return result;
     }
     else if ((regex[1] != '*')&&(regex[1] != '+')&&(regex[0] != '(')){
+        // El ER no comienza con a*<algo> o (u)<algo> 
         if (regex[0] == symbol) return regex.substr(1);
         else return "#";
     }
 
     switch (regex[0]) { // Verifica si el primer caracter es un paréntesis u otra cosa
     case '(':
-        if (mainPairs == 1 && regex[reSize - 1] == '*' && regex[reSize - 2] == ')') {
-        // Solo Hay una expresión del tipo (u)*
-        bool mo = false; // main Or
-        u = regex.substr(1, reSize - 3);
-        v = regex;
-        dU = derive(u, symbol);
-        for (int i = 0; i < dU.size(); i++) {
-            // Aquí se verífica si la derivada tiene un Or principal
-            switch (dU[i]) {
-                case '(':
-                    pS++;
-                    break;
-                case ')':
-                    pS--;
-                    break;
-                case '|':
-                    if (pS == 0) mo = true;
-                    break;
-            }
-        }
-        if (mo) { // Si la ER tiene un Or principal la pone entre paréntesis
-            dU = '(' + dU + ')';
-        }
-        result = dU;
-        if (result != "~") result += v;
-        else result = v;
-        if (dU == "#") result = "#";
-        }
-        else if (mainPairs == 1 && regex[reSize - 1] == '+' && regex[reSize - 2] == ')') {
-            // Solo Hay una expresión del tipo (u)+
-            bool mo = false; // Or principal
+        if (mainPairs == 1 && regex[reSize - 2] == ')') {
+            // Solo Hay una expresión del tipo (u)* o de la forma (u)+
+            bool mo = false; // main Or
             u = regex.substr(1, reSize - 3);
-            v = "(" + u + ")*";
+            if(regex[reSize - 1] == '*'){
+                v = regex;
+            }
+            else if(regex[reSize - 1] == '+'){
+                v = "(" + u + ")*";
+            }
             dU = derive(u, symbol);
             for (int i = 0; i < dU.size(); i++) {
+                // Aquí se verífica si la derivada tiene un Or principal
                 switch (dU[i]) {
                     case '(':
                         pS++;
@@ -412,7 +360,9 @@ string derive(string regex, char symbol) {
                         break;
                 }
             }
-            if (mo) dU = '(' + dU + ')';
+            if (mo) { // Si la ER tiene un Or principal la pone entre paréntesis
+                dU = '(' + dU + ')';
+            }
             result = dU;
             if (result != "~") result += v;
             else result = v;
@@ -424,7 +374,8 @@ string derive(string regex, char symbol) {
             dU = derive(u, symbol);
             if (dU != "~") result = dU;
         }
-        else { // La expresión el del tipo (u)*<algo>, (u)+<algo> o (u)<algo> 
+        else {
+            // La expresión es del tipo (u)<algo>
             bool hl;
             u = regex.substr(0, splitPos);
             v = regex.substr(splitPos);
@@ -437,27 +388,33 @@ string derive(string regex, char symbol) {
             if (hl) { // Si u contiene a lambda, entonces deriva a v
                 dV = derive(v, symbol);
                 if ((dV != "~") && (dV != "#")) {
-                if ((result != "~")&&(result != "#")) result = result + "|" + dV;
-                else result = dV;
+                    if ((result != "#")&&(!containRE(dU, dV))) result = result + "|" + dV;
+                    else result = dV;
+                }
             }
         }
-    }
         break;
-    default:
+    default: // Comienza con algo como a*<algo> o a+<algo>
+        std::cout << "Entra" << std::endl;
         u = regex.substr(0, splitPos);
+        dU = derive(u, symbol);
         v = regex.substr(splitPos);
-        if (regex[splitPos - 1] == '*') {
-            dU = derive(u, symbol);
-            if (dU != "#") result = dU + v;
+
+        result = dU;
+        if (result != "~") result += v;
+        else result = v;
+        if (dU == "#") result = "#";
+
+        if (regex[splitPos - 1] == '*'){
             dV = derive(v, symbol);
-            if ((dV != "~") && (dV != "#")) {
-                if (result != "~") result = result + "|" + dV;
-                else result = dV;
+            if(result != "#"){
+                if((!containRE(dU, dV))&&(dV != "#")) result = result + "|" + dV;
             }
-            if((dU == "#")&&( dV == "#")) return "#";
+            else if(dV != "#") result = dV;
         }
         break;
     }
+
     return result;
 }
 
@@ -466,7 +423,7 @@ bool hasLambda(string regex) {
     int orPos = -1; // Aquí se guarda la posición del primer Or encontrado en caso de que haya
     int splitPos = 0; // Esta será la posición desde la que se partirá el Re en caso de no haber Or Principal
     int mainPairs = 0; // Cuando Parentesis hay en el nivel principal
-    int reSize = regex.size(); // Tamaño del Regex
+    int reSize = (int)regex.size(); // Tamaño del Regex
     bool hasL = false;
     string u; // Parte izquierda de la RE
     string v; // Parte derecha de la RE
@@ -476,7 +433,7 @@ bool hasLambda(string regex) {
 
     for (int i = 0; i < reSize; i++) { // Básicamente hace lo mismo que el switch de derive
         switch (regex[i]) {
-        case '(': 
+        case '(':
             if (i > 1 && regex[i - 1] == ')' && mainPairs == 1 && pS == 0)
                 splitPos = i;
             pS++;
@@ -523,7 +480,7 @@ bool hasLambda(string regex) {
                 u = regex.substr(1, reSize - 2);
                 hasL = hasLambda(u);
             }
-            else { 
+            else {
                 u = regex.substr(0, splitPos);
                 v = regex.substr(splitPos);
                 hasL = hasLambda(u) && hasLambda(v);
@@ -534,6 +491,81 @@ bool hasLambda(string regex) {
             break;
     }
     return hasL;
+}
+
+bool containRE(string mainRE, string secondRE) {
+    int pS = 0;     // PairStack -> En que nivel de parentesis está el análisis
+    int orPos = -1; // Aquí se guarda la posición del primer Or encontrado en caso de que haya
+    int splitPos = 0; // Esta será la posición desde la que se partirá el Re en caso de no haber Or Principal
+    int mainPairs = 0; // Cuando Parentesis hay en el nivel principal
+    int reSize = (int)mainRE.size(); // Tamaño del Regex
+    bool containIt = false; // El primer ER contiene al segundo ER
+    string u; // Parte izquierda de la RE
+    string v; // Parte derecha de la RE
+
+    if (mainRE == "~") return false;
+    if (mainRE == secondRE) return true;
+
+    for (int i = 0; i < reSize; i++) { // Básicamente hace lo mismo que el switch de derive
+        switch (mainRE[i]) {
+        case '(':
+            if (i > 1 && mainRE[i - 1] == ')' && mainPairs == 1 && pS == 0)
+                splitPos = i;
+            pS++;
+            break;
+        case ')':
+            pS--;
+            if (pS == 0) mainPairs++;
+            break;
+        case '*':
+        case '+':
+            if ((pS == 0 && mainPairs <= 1 && splitPos == 0) || (splitPos == 1 && i == 1))
+            splitPos = i + 1;
+            break;
+        case '|':
+            if (pS == 0) {
+                orPos = i;
+                i = reSize;
+            }
+            break;
+        default:
+            if (pS == 0) {
+                if (splitPos == 0) splitPos = i + 1;
+                if (i > 1 && mainRE[i - 1] == ')' && mainPairs == 1) splitPos = i;
+            }
+            break;
+        }
+    }
+
+    if (orPos != -1) {
+        u = mainRE.substr(0, orPos);
+        v = mainRE.substr(orPos + 1);
+        containIt = containRE(u, secondRE) || containRE(v, secondRE);
+        return containIt;
+    }
+
+    switch (mainRE[0]) {
+        case '(':
+            if (mainPairs == 1 && (mainRE[reSize - 1] == '*' || mainRE[reSize - 1] == '*') && mainRE[reSize - 2] == ')') {
+                u = mainRE.substr(1, reSize - 3);
+                containIt = containRE(u, secondRE);
+            }
+            else if (mainPairs == 1 && mainRE[reSize - 1] == ')') {
+                u = mainRE.substr(1, reSize - 2);
+                containIt = containRE(u, secondRE);
+            }
+            else {
+                u = mainRE.substr(0, splitPos);
+                v = mainRE.substr(splitPos);
+                /* containIt = containRE(u, secondRE) && hasLambda(v); */
+                containIt = false;
+            }
+            break;
+        default:
+            containIt = false;
+            break;
+    }
+    return containIt;
 }
 
 bool stateExist(list<State> states, string name){

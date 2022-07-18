@@ -421,7 +421,7 @@ string derive(string regex, char symbol) {
                 dU = '(' + dU + ')';
             }
             result = dU;
-            if (result != "~") result += v;
+            if (result != "~" && !containRE(v, dU)) result += v;
             else result = v;
             if (dU == "#") result = "#";
         }
@@ -457,7 +457,7 @@ string derive(string regex, char symbol) {
             hl = hasLambda(u);
             dU = derive(u, symbol);
             if ((dU != "~") && (dU != "#")) result = dU;
-            if (result != "~") result += v;
+            if (result != "~" && !containRE(v, dU)) result += v;
             else result = v;
             std::cout << "(u)<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
             if (dU == "#") result = "#";
@@ -477,7 +477,7 @@ string derive(string regex, char symbol) {
         v = regex.substr(splitPos);
 
         result = dU;
-        if (result != "~") result += v;
+        if (result != "~" && !containRE(v, dU)) result += v;
         else result = v;
         if (dU == "#") result = "#";
 
@@ -486,7 +486,7 @@ string derive(string regex, char symbol) {
         if (regex[splitPos - 1] == '*'){
             dV = derive(v, symbol);
             if(result != "#"){
-                if((!containRE(dU, dV))&&(dV != "#")) result = result + "|" + dV;
+                if((!containRE(v, dV))&&(dV != "#")) result = result + "|" + dV;
             }
             else if(dV != "#") result = dV;
             std::cout << "a*<algo> " << regex  << ":\n\t"<< "U: " << u << "->Du: " << dU << "\n\tV: " << v << "->Dv: " << dV << std::endl;
@@ -642,8 +642,8 @@ bool containRE(string mainRE, string secondRE) {
             else {
                 u = mainRE.substr(0, splitPos);
                 v = mainRE.substr(splitPos);
-                /* containIt = containRE(u, secondRE) && hasLambda(v); */
-                containIt = false;
+                containIt = containRE(u, secondRE) && hasLambda(v);
+                /* containIt = false; */
             }
             break;
         default:

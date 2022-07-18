@@ -26,12 +26,16 @@ class App {
 
 
     public:
-        Automata afd;
+        //
+        Automata af;
         Fl_Input *regex_in;
         Fl_Input *line_in;
         Fl_Text_Buffer *buff;
 
-        App();
+        // Constructor
+        App(int width, int height, string title);
+
+        // Methods
         void menu_actions();
 };
 

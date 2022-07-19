@@ -13,30 +13,32 @@ using std::list;
 
 class Automata{
 	private:
-		string regex; // ER de la que está basada el AFD
-		string symbols; // Conjunto de símbolos que utiliza el AFD
-		State actualState; // Estado actual del AF
-		list<State> states; // Lista de estados del AF
-		list<string> rightStates; // Lista de estados de Aceptación
+		string regex;
+		string symbols;
+		State actualState;
+		list<State> states;
+		list<string> rightStates;
 
 	public:
-		Automata(); // Constructor Vacio por si ajá
-		Automata(string regex); // Constructor en base a una ER
+		Automata();
+		Automata(string regex);
 		string getRegex();
 		string getSymbols();
 		list<State> getStates();
 		list<string> getRightStates();
         list<string> getTransitions();
 		string getActualState();
-        string getTable(); // Retorna un string con la tabla que representa el AFD
-        bool validate(string line); // Valida un string caracter a caracter una vez que el AFD está construido
-		void nextState(char sym); // Busca el estado siguiente
-		void buildAutomata(); // Construye el AFD si ya la clase tiene definido el regex 
-        void shortNames(); // Sustituye los nombres temporales de los estados por unos más cortos
+        string getTable();
+        string getInfo();
+        bool validate(string line);
+		void nextState(char sym);
+		void buildAutomata();
+        void shortNames();
 };
 
 string derive(string lang, char symbol);
 bool hasLambda(string regex);
 bool stateExist(list<State> states, string name);
+bool containRE(string mainRE, string secondRE);
 
 #endif

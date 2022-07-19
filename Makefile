@@ -1,10 +1,10 @@
-flags= -lncurses
+flags= -lncurses -lfltk
 obj=g++ -c 
 final=g++ -o 
 project=./build/automatas
 incl=src/include/
 
-objs=src/main.o src/automata.o src/state.o
+objs=src/main.o src/automata.o src/state.o src/app.o
 
 all: autof clean
 
@@ -19,6 +19,9 @@ automata.o: src/automata.cpp $(incl)automata.hpp $(incl)state.hpp
 	
 state.o: src/state.cpp $(incl)state.hpp
 	$(obj)src/state.cpp
+
+app.o: src/app.cpp $(incl)app.hpp
+	$(obj)src/app.cpp
 	
 clean:
 	rm $(objs)
